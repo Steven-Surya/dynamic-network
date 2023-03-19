@@ -1,0 +1,130 @@
+---
+title: "Introduction to Dynamic Network Analysis and Visulization"
+author: "Steven Surya Tanujaya"
+date: "July 18, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+  There are a lot of cases in this world that can be represented as a graph/network. But sometimes that network is not static, which means it changes over time. This kind of network is called 'dynamic network' (or 'temporal network' sometimes). Since it is usually observed in social network, the analysis through dynamic network is called "(Temporal) Social Network Analysis" sometimes . Some examples of real-life dynamic network are: friendship network, business connection network, the network of biological interaction between organisms, Traffic/Access network,etc. The time intervention here does not allow us to use the algorithm, analysis, and tools the same as the ordinary network-analysis one.     
+
+  I will introduce some important package in R specifically for Dynamic Network Analysis and Visualization. There are two important packages here: `tsna` (Temporal Social Network Analysis) and `ndtv` (Network Dynamic Temporal Visualization). The `tsna` package consist functionality to analyse temporal network, it is the extension of `sna` package.
+The `ndtv` package was built to render temporal network data as movies, interactive animations, or any other representations of changing relational structures and attributes. In order to work with the network animations in `ndtv`, we better understand `Statnet`’s dynamic network format (`Statnet` is a family packages, including `network`, `sna`, `ergm`, `stergm`, and others).
+
+Here I use 'short.stergm.sim' dataset from `ndtv` package. This dataset is a simulation data based on a network of business connections among Renaissance Florentine families. 
+
+```{r}
+library(ndtv)
+data(short.stergm.sim)
+head(as.data.frame(short.stergm.sim))
+```
+
+As you can see, the dataset contain some important variables as follow:   
+- `onset` : The beginning time point of the relation,   
+- `terminus` : The end time point of the relation,   
+- `tail` : the origin vertex,   
+- `head` : the terminal vertex,   
+- `duration` : the duration of the relation.
+
+  First, we want to plot the network (ignoring the time point) as follows.
+```{r}
+plot(short.stergm.sim)
+```
+
+We can also plot the network at some time-point. In this case we need `network.extract()` function.
+
+```{r}
+plot(network.extract(short.stergm.sim,at=5))
+```
+
+  We can also plot the network in some duration of time. Here there are two variation of plotting:   
+  (1.) plot any edge/relation that happen at some time-point in given duration of time, or   
+  (2.) plot the edge/relation that happen at the entire given duration of time.
+Let we see what's the difference.
+
+```{r}
+# for (1.) 
+plot(network.extract(short.stergm.sim,onset=1,terminus=5,rule = "any"))
+# for (2.)
+plot(network.extract(short.stergm.sim,onset=1,terminus=5,rule = "all"))
+```
+
+Lastly, we can also render a movie about our network to see how it changes over time.
+```{r}
+# Change the output.mode to JSON or HTML to see the difference
+render.d3movie(short.stergm.sim,displaylabels=TRUE,output.mode = "htmlWidget") 
+```
+
+That's all the brief introduction of the `ndtv` package. Now we will explore some of supporting algorithm from `tsna` package.
+
+```{r}
+library(tsna)
+```
+
+
+1. Plot the edge formation over time 
+```{r}
+plot(tEdgeFormation(short.stergm.sim, time.interval = 1))
+```
+
+Here we can observe that there is a high spike in edge formation at the time-point 13, this implies that the business connections are raised here. 
+
+2. Plot the network's centrality over time.
+
+```{r}
+dynamicBetweenness <- tSnaStats(
+  short.stergm.sim,
+  snafun = "centralization",
+  start = 1,
+  end = 25,
+  time.interval = 1,
+  aggregate.dur = 0, # The duration that you think 'seasonality' exist.
+  FUN = "betweenness"
+)
+plot(dynamicBetweenness)
+```
+
+
+  Since the centrality measurement here is using 'betweeness',  we can say that around time-point 3 and around time-point 14 there is a big network component with some family having important role in mantaining connectivity between other family.
+
+  The last property that we want to observe are 'Temporal reachable set' and 'Temporal path'.
+
+3. Forward/backward 'Temporal reachable' set and 'Temporal path'
+
+  Sometimes, we also want to know how many vertices can be "reached" by one vertex or how many vertices can "reach" that vertex in the entire period of time. `tReach` function will give us information about that. The term 'reach' here maybe a bit confusing, it will be clearer to understand in the 'temporal path' section. There is two variation about `direction` parameter here:
+
+- Backward: It will count how many vertices that can reach by certain vertex (means: this vertex is the 'terminal/head' vertex in directed network).
+- Forward: It will count how many vertices that can be reached by certain vertex (means: this vertex is the 'tail' vertex in directed network).
+
+  Since we interpret the network as undirected network in `short.stergn.sim` dataset (business connection suppose to be mutual), the direction backward and  forward clearly give us the same result. The 'index' axis in plot below stands for vertex.id and the y-axis visualize how many vertices that connected to it through temporal path (including itself).  
+
+```{r}
+plot(tReach(short.stergm.sim,direction="bkwd"))
+plot(tReach(short.stergm.sim,direction = "fwd"))
+```
+
+  In order to see the phenomenon clearly, let we use `tPath` function to visualize all feasible (forward/backward) temporal path that are started/ended at a desired vertex. Here I visualize the feasible forward temporal path that start from "Ridolfi" (vertex id=13). From the visualization below, we can observe that "Ridolfi" and "Tournabouni" are connected by 'temporal path'. The temporal path here can be illustrated as follows. 
+  
+  Suppose that Ridolfi family want to send some important business contract to Tornabuoni family. Ridolfi family need to send it between time-point 1 to 25 and since they are not directly connected, Ridolfi family need to send it via one of their business connection and pass it to other business connected family until it arrives at Tournabouni family. The problem is: Can this method be done? The answer is "YES". Observe that at time-point of 13, Ridolfi is connected to Barbadori and at the exact time, Barbadori is connected to Lamberteschi. Lamberteschi family need to keep the contract with them until the time-point of 21 and pass it to Tournabouni family. Yes, this route is called "Temporal path". Here we can also observe that Ridolfi family cannot send a contract to Albizzi family using the same method, since there is no temporal path from Ridolfi to Albizzi.
+
+```{r}
+set.seed(100)
+RidolfiFwdPath <- tPath(
+  short.stergm.sim,
+  v = 13,
+  direction = "fwd"
+)
+plotPaths(
+  short.stergm.sim,
+  RidolfiFwdPath,
+  displaylabels = T,
+  vertex.col = "white"
+)
+```
+
+Reference:   
+- https://kateto.net/network-visualization   
+- https://programminghistorian.org/en/lessons/temporal-network-analysis-with-r#fnref:2
