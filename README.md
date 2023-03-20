@@ -5,8 +5,8 @@ What I mean by that is, in a temporal network, some vertices may be connected bu
 we cannot simply use a static visualization for a temproal network. Instead, we create sequence of static visualizations in order to visualize 
 a temporal network. For this purpose, in this project, I use `tsna` and `ndtv` packages to visualize and analyze a temporal network.
 
-The main visualization will look like the following picture which can be played like a video (to see the actual result, check it 
-[here](https://www.rpubs.com/Steven_Surya/Dynamic-network)).
+The main visualization will look like the following picture which can be played like a video (in the actual result).
+To see the actual result, check [here](https://www.rpubs.com/Steven_Surya/Dynamic-network).
 
 <img src="dynamic network.png" width="700" height="500">
 
