@@ -15,7 +15,7 @@ by temporal path(s). What I mean by that is, look at the picture above, when **t
 Suppose that the connection in that picture represents a business connection between two people. We know that this kind of connection create a temporal 
 network that changes over time. Suppose that we got a report that during **t=0** to **t=25**, Ridolfi collected massive amount of illegal money 
 and in order to make it less obvious, he hid and distributed the money to some of his business partners and told them to keep the money for him in 
-exchange to some percentage for them. To avoid suspicion, his business partners also distribute the money that they got in a similar manner to their
+exchange to some percentage of it. To avoid suspicion, his business partners also distribute the money that they got in a similar manner to their
 business partners (may not be a business partner of Rudolfi) and so on, indefinitely. The police want to know about whether or not it is possible that 
 Tornabuoni also took a part in this scheme. If it is possible, then in what scenario Tornabuoni could be the part of this scheme?
 We can observe this by knowing whether or not Rudolfi and Tornabuoni are temporal-connected in the network.
